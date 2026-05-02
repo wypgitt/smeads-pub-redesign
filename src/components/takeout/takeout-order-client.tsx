@@ -2,9 +2,10 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Minus, Plus, ShoppingBag, Copy, Check } from "lucide-react";
+import { Minus, Plus, Search, ShoppingBag, Copy, Check, Flame } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
+  getDefaultModifiers,
   getTakeoutItem,
   takeoutCategories,
   takeoutItems,
@@ -13,6 +14,7 @@ import {
 } from "@/data/takeout-menu";
 import { site } from "@/data/site";
 import {
+  cartLineKey,
   cartSubtotal,
   formatMoney,
   formatOrderPlainText,
@@ -31,17 +33,23 @@ type Status =
     }
   | { kind: "error"; message: string };
 
-function linesFromCart(cart: Record<string, number>): CartLine[] {
-  return (Object.entries(cart) as [TakeoutItemId, number][])
-    .filter(([, qty]) => qty > 0)
-    .map(([id, qty]) => ({ id, qty }));
-}
+const PICKUP_PRESETS: { label: string; mode: "asap" | "schedule"; detail: string }[] = [
+  { label: "ASAP", mode: "asap", detail: "" },
+  { label: "~20 min", mode: "schedule", detail: "In about 20 minutes" },
+  { label: "~40 min", mode: "schedule", detail: "In about 40 minutes" },
+  { label: "~6:00 pm", mode: "schedule", detail: "Around 6:00 pm today" },
+  { label: "~7:00 pm", mode: "schedule", detail: "Around 7:00 pm today" },
+];
 
 export function TakeoutOrderClient() {
   const [category, setCategory] = useState<TakeoutCategoryId>(
     takeoutCategories[0]!.id,
   );
-  const [cart, setCart] = useState<Record<string, number>>({});
+  const [lines, setLines] = useState<CartLine[]>([]);
+  const [variantMods, setVariantMods] = useState<
+    Partial<Record<TakeoutItemId, Record<string, string>>>
+  >({});
+  const [search, setSearch] = useState("");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [pickupMode, setPickupMode] = useState<"asap" | "schedule">("asap");
@@ -50,26 +58,76 @@ export function TakeoutOrderClient() {
   const [status, setStatus] = useState<Status>({ kind: "idle" });
   const [copied, setCopied] = useState(false);
 
-  const lines = useMemo(() => linesFromCart(cart), [cart]);
   const subtotal = useMemo(() => cartSubtotal(lines), [lines]);
   const itemCount = useMemo(
     () => lines.reduce((n, l) => n + l.qty, 0),
     [lines],
   );
 
-  const filtered = useMemo(
+  const searchNeedle = search.trim().toLowerCase();
+  const filteredByCat = useMemo(
     () => takeoutItems.filter((i) => i.categoryId === category),
     [category],
   );
+  const filtered = useMemo(() => {
+    if (!searchNeedle) return filteredByCat;
+    return filteredByCat.filter(
+      (i) =>
+        i.name.toLowerCase().includes(searchNeedle) ||
+        i.description.toLowerCase().includes(searchNeedle),
+    );
+  }, [filteredByCat, searchNeedle]);
 
-  function bump(id: TakeoutItemId, delta: number) {
-    setCart((prev) => {
-      const next = { ...prev };
-      const q = (next[id] ?? 0) + delta;
-      if (q <= 0) delete next[id];
-      else next[id] = Math.min(25, q);
+  const popularItems = useMemo(
+    () => takeoutItems.filter((i) => "popular" in i && i.popular),
+    [],
+  );
+
+  function modsForItem(item: (typeof takeoutItems)[number]): Record<string, string> {
+    const base = getDefaultModifiers(item);
+    const override = variantMods[item.id];
+    return { ...base, ...override };
+  }
+
+  function setMod(
+    item: (typeof takeoutItems)[number],
+    groupId: string,
+    value: string,
+  ) {
+    setVariantMods((prev) => ({
+      ...prev,
+      [item.id]: { ...modsForItem(item), [groupId]: value },
+    }));
+  }
+
+  function bumpLine(line: CartLine, delta: number) {
+    setLines((prev) => {
+      const key = cartLineKey(line);
+      const next = [...prev];
+      const idx = next.findIndex((l) => cartLineKey(l) === key);
+      if (idx < 0) {
+        if (delta <= 0) return prev;
+        return [...next, { ...line, qty: Math.min(25, delta) }];
+      }
+      const q = next[idx]!.qty + delta;
+      if (q <= 0) {
+        next.splice(idx, 1);
+      } else {
+        next[idx] = { ...next[idx]!, qty: Math.min(25, q) };
+      }
       return next;
     });
+  }
+
+  function addFromMenu(item: (typeof takeoutItems)[number], delta: number) {
+    bumpLine(
+      {
+        id: item.id,
+        qty: 1,
+        modifiers: modsForItem(item),
+      },
+      delta,
+    );
   }
 
   async function submit() {
@@ -104,7 +162,12 @@ export function TakeoutOrderClient() {
           pickupDetail:
             pickupMode === "schedule" ? pickupDetail : "",
           notes,
-          items: lines.map((l) => ({ id: l.id, qty: l.qty })),
+          items: lines.map((l) => ({
+            id: l.id,
+            qty: l.qty,
+            modifiers:
+              Object.keys(l.modifiers).length > 0 ? l.modifiers : undefined,
+          })),
         }),
       });
       const data = (await res.json()) as {
@@ -173,10 +236,55 @@ export function TakeoutOrderClient() {
           Order for pickup
         </h1>
         <p className="mt-3 text-[var(--text-muted)]">
-          Build your order here; we&apos;ll confirm prep time by phone when needed.
-          Pay at pickup unless we&apos;ve arranged something else.
+          Search the menu, tweak sauces and temps, pick a pickup window, then send it.
+          We&apos;ll confirm prep time by phone when needed. Pay at pickup unless we&apos;ve
+          arranged something else.
         </p>
       </header>
+
+      <div className="mt-8">
+        <label htmlFor="takeout-search" className="sr-only">
+          Search menu
+        </label>
+        <div className="relative max-w-xl">
+          <Search
+            className="pointer-events-none absolute left-3 top-1/2 size-5 -translate-y-1/2 text-[var(--text-muted)]"
+            aria-hidden
+          />
+          <input
+            id="takeout-search"
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search nachos, burger, chowder…"
+            className="focus-ring w-full rounded-full border border-[var(--border-subtle)] bg-[var(--bg-card)] py-3 pl-11 pr-4 text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
+          />
+        </div>
+      </div>
+
+      {popularItems.length > 0 ? (
+        <div className="mt-8">
+          <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-[var(--copper)]">
+            <Flame className="size-4" aria-hidden />
+            Popular right now
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {popularItems.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => addFromMenu(item, 1)}
+                className="focus-ring rounded-full border border-[var(--border-subtle)] bg-[var(--bg-card)] px-4 py-2 text-sm font-medium text-[var(--text-primary)] transition hover:border-[var(--accent)]/60"
+              >
+                + {item.name}{" "}
+                <span className="text-[var(--accent)] tabular-nums">
+                  {formatMoney(item.priceCents)}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
 
       <div className="mt-12 grid gap-10 lg:grid-cols-[1fr_min(26rem,100%)] lg:items-start">
         <div>
@@ -199,13 +307,24 @@ export function TakeoutOrderClient() {
 
           <ul className="mt-8 space-y-4">
             {filtered.map((item) => {
-              const qty = cart[item.id] ?? 0;
+              const activeKey = cartLineKey({
+                id: item.id,
+                qty: 1,
+                modifiers: modsForItem(item),
+              });
+              const qty = lines
+                .filter((l) => cartLineKey(l) === activeKey)
+                .reduce((n, l) => n + l.qty, 0);
+
+              const modGroups =
+                "modifiers" in item && item.modifiers ? item.modifiers : null;
+
               return (
                 <li
                   key={item.id}
-                  className="flex flex-col gap-3 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-card)] p-4 sm:flex-row sm:items-center sm:justify-between"
+                  className="flex flex-col gap-3 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-card)] p-4 sm:flex-row sm:items-start sm:justify-between"
                 >
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <p className="font-serif text-lg font-semibold text-[var(--text-primary)]">
                       {item.name}
                     </p>
@@ -214,7 +333,32 @@ export function TakeoutOrderClient() {
                         {item.description}
                       </p>
                     ) : null}
-                    <p className="mt-2 text-sm font-medium text-[var(--accent)]">
+                    {modGroups ? (
+                      <div className="mt-3 flex flex-wrap gap-3">
+                        {modGroups.map((g) => (
+                          <label
+                            key={g.id}
+                            className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-[var(--accent)]"
+                          >
+                            {g.label}
+                            <select
+                              value={modsForItem(item)[g.id] ?? g.options[0]}
+                              onChange={(e) =>
+                                setMod(item, g.id, e.target.value)
+                              }
+                              className="focus-ring rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-deep)] px-3 py-2 text-sm font-normal normal-case tracking-normal text-[var(--text-primary)]"
+                            >
+                              {g.options.map((opt) => (
+                                <option key={opt} value={opt}>
+                                  {opt}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                        ))}
+                      </div>
+                    ) : null}
+                    <p className="mt-3 text-sm font-medium text-[var(--accent)]">
                       {formatMoney(item.priceCents)}
                     </p>
                   </div>
@@ -223,7 +367,7 @@ export function TakeoutOrderClient() {
                       type="button"
                       aria-label={`Remove one ${item.name}`}
                       className="focus-ring flex size-10 items-center justify-center rounded-full border border-[var(--border-subtle)] text-[var(--text-primary)] disabled:opacity-40"
-                      onClick={() => bump(item.id, -1)}
+                      onClick={() => addFromMenu(item, -1)}
                       disabled={qty <= 0}
                     >
                       <Minus className="size-4" />
@@ -235,7 +379,7 @@ export function TakeoutOrderClient() {
                       type="button"
                       aria-label={`Add one ${item.name}`}
                       className="focus-ring flex size-10 items-center justify-center rounded-full bg-[var(--accent)] text-[var(--bg-deep)]"
-                      onClick={() => bump(item.id, 1)}
+                      onClick={() => addFromMenu(item, 1)}
                     >
                       <Plus className="size-4" />
                     </button>
@@ -244,6 +388,12 @@ export function TakeoutOrderClient() {
               );
             })}
           </ul>
+
+          {filtered.length === 0 ? (
+            <p className="mt-8 text-sm text-[var(--text-muted)]">
+              No matches — try another search or pick a category.
+            </p>
+          ) : null}
 
           <p className="mt-8 text-sm text-[var(--text-muted)]">
             Don&apos;t see what you want? Mention it in the notes or{" "}
@@ -257,10 +407,7 @@ export function TakeoutOrderClient() {
           </p>
         </div>
 
-        <aside
-          id="cart"
-          className="lg:sticky lg:top-24"
-        >
+        <aside id="cart" className="lg:sticky lg:top-24">
           <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-elevated)] p-6 shadow-xl shadow-black/20">
             <div className="flex items-center gap-2 text-[var(--text-primary)]">
               <ShoppingBag className="size-5 text-[var(--accent)]" aria-hidden />
@@ -269,16 +416,20 @@ export function TakeoutOrderClient() {
 
             {lines.length === 0 ? (
               <p className="mt-4 text-sm text-[var(--text-muted)]">
-                Cart is empty — add starters or a burger from the left.
+                Cart is empty — tap popular picks or browse categories.
               </p>
             ) : (
               <ul className="mt-4 space-y-3 border-b border-[var(--border-subtle)] pb-4">
                 {lines.map((line) => {
                   const item = getTakeoutItem(line.id);
                   if (!item) return null;
+                  const modStr = Object.entries(line.modifiers)
+                    .filter(([, v]) => v.trim())
+                    .map(([k, v]) => `${k}: ${v}`)
+                    .join(" · ");
                   return (
                     <li
-                      key={line.id}
+                      key={cartLineKey(line)}
                       className="flex items-start justify-between gap-3 text-sm"
                     >
                       <span className="text-[var(--text-muted)]">
@@ -286,6 +437,11 @@ export function TakeoutOrderClient() {
                           {line.qty}×
                         </span>{" "}
                         {item.name}
+                        {modStr ? (
+                          <span className="mt-0.5 block text-xs text-[var(--text-muted)]">
+                            {modStr}
+                          </span>
+                        ) : null}
                       </span>
                       <span className="shrink-0 tabular-nums text-[var(--text-primary)]">
                         {formatMoney(item.priceCents * line.qty)}
@@ -303,7 +459,7 @@ export function TakeoutOrderClient() {
               </span>
             </div>
             <p className="mt-2 text-xs text-[var(--text-muted)]">
-              Tax may be added at pickup. Menu items & prices are examples — sync with your printed menu.
+              Tax may be added at pickup. Staff will confirm final timing and total.
             </p>
 
             <div className="mt-6 space-y-4">
@@ -343,38 +499,36 @@ export function TakeoutOrderClient() {
 
               <fieldset>
                 <legend className="text-xs font-semibold uppercase tracking-wide text-[var(--accent)]">
-                  Pickup
+                  Pickup time
                 </legend>
                 <div className="mt-2 flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setPickupMode("asap")}
-                    className={`focus-ring rounded-full px-4 py-2 text-sm font-semibold ${
-                      pickupMode === "asap"
-                        ? "bg-[var(--accent)] text-[var(--bg-deep)]"
-                        : "border border-[var(--border-subtle)] text-[var(--text-muted)]"
-                    }`}
-                  >
-                    ASAP
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPickupMode("schedule")}
-                    className={`focus-ring rounded-full px-4 py-2 text-sm font-semibold ${
-                      pickupMode === "schedule"
-                        ? "bg-[var(--accent)] text-[var(--bg-deep)]"
-                        : "border border-[var(--border-subtle)] text-[var(--text-muted)]"
-                    }`}
-                  >
-                    Schedule
-                  </button>
+                  {PICKUP_PRESETS.map((p) => (
+                    <button
+                      key={p.label}
+                      type="button"
+                      onClick={() => {
+                        setPickupMode(p.mode);
+                        setPickupDetail(p.detail);
+                      }}
+                      className={`focus-ring rounded-full px-3 py-1.5 text-xs font-semibold sm:text-sm ${
+                        pickupMode === p.mode &&
+                        (p.mode === "asap"
+                          ? p.detail === ""
+                          : pickupDetail === p.detail)
+                          ? "bg-[var(--accent)] text-[var(--bg-deep)]"
+                          : "border border-[var(--border-subtle)] text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                      }`}
+                    >
+                      {p.label}
+                    </button>
+                  ))}
                 </div>
                 {pickupMode === "schedule" ? (
                   <input
                     value={pickupDetail}
                     onChange={(e) => setPickupDetail(e.target.value)}
                     className="focus-ring mt-3 w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-deep)] px-4 py-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
-                    placeholder="e.g. Today around 6:15 pm"
+                    placeholder="Fine-tune pickup time"
                   />
                 ) : null}
               </fieldset>
@@ -472,8 +626,7 @@ export function TakeoutOrderClient() {
         </aside>
       </div>
 
-      {/* Mobile cart bar */}
-      <div className="fixed bottom-0 left-0 right-0 border-t border-[var(--border-subtle)] bg-[var(--bg-deep)]/95 p-4 backdrop-blur-lg sm:hidden">
+      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--border-subtle)] bg-[var(--bg-deep)]/95 p-4 backdrop-blur-lg sm:hidden">
         <div className="flex items-center justify-between gap-3">
           <div>
             <p className="text-xs text-[var(--text-muted)]">Cart</p>

@@ -1,16 +1,17 @@
 @import "tailwindcss";
 
 :root {
-  --bg-deep: #0e0c0a;
-  --bg-elevated: #161311;
-  --bg-card: #1c1916;
-  --border-subtle: rgba(245, 240, 232, 0.12);
-  --text-primary: #f5f0e8;
-  --text-muted: rgba(245, 240, 232, 0.68);
-  --accent: #d4a853;
-  --accent-dim: #8b6914;
-  --copper: #c17f59;
-  --ring: rgba(212, 168, 83, 0.35);
+  /* Warm, lived-in pub — not “luxury steakhouse” black/gold */
+  --bg-deep: #1a1612;
+  --bg-elevated: #231e18;
+  --bg-card: #2c261f;
+  --border-subtle: rgba(250, 246, 238, 0.14);
+  --text-primary: #faf6ee;
+  --text-muted: rgba(250, 246, 238, 0.72);
+  --accent: #e8b84a;
+  --accent-dim: #a67c28;
+  --copper: #c9885f;
+  --ring: rgba(232, 184, 74, 0.4);
 }
 
 @theme inline {

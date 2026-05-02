@@ -11,7 +11,7 @@ import {
   MessageSquareText,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { SmeadsPubAI } from "@/components/contact/smeads-pub-ai";
+import { AskSmeadsAiCta } from "@/components/contact/ask-smeads-ai-cta";
 import { site } from "@/data/site";
 
 type FormStatus =
@@ -122,7 +122,7 @@ export function ContactPageView() {
         </div>
 
         <div className="mt-14 max-w-3xl">
-          <SmeadsPubAI />
+          <AskSmeadsAiCta />
         </div>
 
         <div className="mt-14 grid gap-12 lg:grid-cols-2 lg:items-start">
@@ -162,7 +162,10 @@ export function ContactPageView() {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-elevated)] p-6">
+            <div
+              id="hours"
+              className="scroll-mt-28 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-elevated)] p-6"
+            >
               <h2 className="font-serif text-xl font-semibold text-[var(--text-primary)]">
                 Hours
               </h2>

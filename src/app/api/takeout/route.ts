@@ -20,6 +20,7 @@ const bodySchema = z.object({
       z.object({
         id: z.string(),
         qty: z.number().int().positive(),
+        modifiers: z.record(z.string(), z.string()).optional(),
       }),
     )
     .min(1)
@@ -52,7 +53,13 @@ export async function POST(req: Request) {
     );
   }
 
-  const lines = resolveCartLines(items);
+  const lines = resolveCartLines(
+    items.map((row) => ({
+      id: row.id,
+      qty: row.qty,
+      modifiers: row.modifiers,
+    })),
+  );
   if (!lines) {
     return NextResponse.json({ error: "Unknown menu item or bad quantity." }, { status: 400 });
   }
@@ -71,13 +78,18 @@ export async function POST(req: Request) {
 
   const notifyTo = process.env.TAKEOUT_NOTIFY_EMAIL?.trim();
   const resendKey = process.env.RESEND_API_KEY?.trim();
-  const from =
-    process.env.RESEND_FROM?.trim() ||
-    `Takeout <onboarding@resend.dev>`;
+  const from = process.env.RESEND_FROM?.trim();
 
   let delivery: "email" | "manual" = "manual";
 
   if (notifyTo && resendKey) {
+    if (!from) {
+      return NextResponse.json(
+        { error: "Email sender is not configured. Call the pub or try again." },
+        { status: 500 },
+      );
+    }
+
     try {
       const resend = new Resend(resendKey);
 

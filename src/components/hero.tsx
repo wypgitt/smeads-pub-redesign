@@ -2,105 +2,114 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { MapPin, ShoppingBag, UtensilsCrossed } from "lucide-react";
 import { site } from "@/data/site";
+import { HeroMosaic } from "@/components/home/hero-mosaic";
+import { TaskStrip } from "@/components/home/task-strip";
+import { TonightPanel } from "@/components/home/tonight-panel";
+
+const MOSAIC = site.gallery.slice(0, 4).map((g) => ({
+  src: g.src,
+  alt: g.alt,
+  caption: g.caption,
+}));
 
 export function Hero() {
   return (
     <section
       id="home"
-      className="relative grain min-h-[min(100vh,52rem)] overflow-hidden pt-24 pb-16 sm:pt-28"
+      className="relative overflow-hidden border-b border-[var(--border-subtle)] bg-[var(--bg-deep)] pt-20 pb-12 sm:pt-24"
     >
       <div
-        className="pointer-events-none absolute inset-0"
+        className="pointer-events-none absolute inset-0 opacity-40"
         aria-hidden
-      >
-        <div className="absolute -left-1/4 top-0 h-[28rem] w-[28rem] rounded-full bg-[var(--accent)]/10 blur-3xl" />
-        <div className="absolute -right-1/4 bottom-0 h-[24rem] w-[24rem] rounded-full bg-[var(--copper)]/15 blur-3xl" />
-        <div className="absolute inset-0 bg-gradient-to-b from-[var(--bg-deep)] via-transparent to-[var(--bg-deep)]" />
-      </div>
+        style={{
+          background:
+            "radial-gradient(ellipse 80% 50% at 50% -20%, rgba(232, 184, 74, 0.15), transparent 50%)",
+        }}
+      />
 
       <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
-        <motion.p
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="text-sm font-semibold uppercase tracking-[0.25em] text-[var(--accent)]"
-        >
-          {site.tagline}
-        </motion.p>
-        <motion.h1
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.55, delay: 0.05 }}
-          className="mt-4 max-w-4xl font-serif text-4xl font-semibold leading-[1.1] tracking-tight text-[var(--text-primary)] sm:text-5xl md:text-6xl"
-        >
-          {site.hero.headline}
-        </motion.h1>
-        <motion.p
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.55, delay: 0.1 }}
-          className="mt-6 max-w-2xl text-lg text-[var(--text-muted)] sm:text-xl"
-        >
-          {site.hero.sub}
-        </motion.p>
-
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.55, delay: 0.15 }}
-          className="mt-10 flex flex-wrap gap-3"
-        >
-          <Link
-            href="/order"
-            className="focus-ring inline-flex items-center justify-center gap-2 rounded-full bg-[var(--accent)] px-6 py-3 text-sm font-semibold text-[var(--bg-deep)] transition hover:brightness-110"
-          >
-            <ShoppingBag className="size-4" aria-hidden />
-            Order takeout
-          </Link>
-          <a
-            href={`tel:${site.phoneTel}`}
-            className="focus-ring inline-flex items-center justify-center rounded-full border border-[var(--border-subtle)] bg-[var(--bg-card)] px-6 py-3 text-sm font-semibold text-[var(--text-primary)] transition hover:border-[var(--accent)]"
-          >
-            Call {site.phone}
-          </a>
-          <Link
-            href="#visit"
-            className="focus-ring inline-flex items-center justify-center gap-2 rounded-full border border-[var(--border-subtle)] bg-[var(--bg-card)] px-6 py-3 text-sm font-semibold text-[var(--text-primary)] transition hover:border-[var(--accent)]"
-          >
-            <MapPin className="size-4 text-[var(--accent)]" aria-hidden />
-            Directions
-          </Link>
-          <Link
-            href="/menu"
-            className="focus-ring inline-flex items-center justify-center gap-2 rounded-full border border-transparent px-6 py-3 text-sm font-semibold text-[var(--accent)] underline-offset-4 hover:underline"
-          >
-            <UtensilsCrossed className="size-4" aria-hidden />
-            View full menu
-          </Link>
-        </motion.div>
-
-        <motion.dl
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.55, delay: 0.25 }}
-          className="mt-16 grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
-        >
-          {site.highlights.map((item) => (
-            <div
-              key={item.title}
-              className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-card)]/80 p-5 backdrop-blur-sm"
+        <div className="grid items-start gap-10 lg:grid-cols-2 lg:gap-12">
+          <div>
+            <motion.p
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--copper)]"
             >
-              <dt className="font-serif text-xl font-semibold text-[var(--text-primary)]">
-                {item.title}
-              </dt>
-              <dd className="mt-2 text-sm leading-relaxed text-[var(--text-muted)]">
-                {item.detail}
-              </dd>
-            </div>
-          ))}
-        </motion.dl>
+              {site.name} · {site.address.city}
+            </motion.p>
+            <motion.h1
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.05 }}
+              className="mt-3 font-serif text-4xl font-semibold leading-[1.1] tracking-tight text-[var(--text-primary)] sm:text-5xl md:text-[3.15rem]"
+            >
+              {site.hero.headline}
+            </motion.h1>
+            <motion.p
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="mt-5 max-w-xl text-lg leading-relaxed text-[var(--text-muted)]"
+            >
+              {site.hero.sub}
+            </motion.p>
+
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
+              className="mt-8"
+            >
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)]">
+                What do you need?
+              </p>
+              <TaskStrip />
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="mt-10 grid gap-4 sm:grid-cols-2"
+            >
+              {site.highlights.map((item) => (
+                <div
+                  key={item.title}
+                  className="rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card)]/60 px-4 py-4"
+                >
+                  <p className="font-serif text-lg font-semibold text-[var(--text-primary)]">
+                    {item.title}
+                  </p>
+                  <p className="mt-1 text-sm leading-relaxed text-[var(--text-muted)]">
+                    {item.detail}
+                  </p>
+                </div>
+              ))}
+            </motion.div>
+
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.28 }}
+              className="mt-8 text-sm text-[var(--text-muted)]"
+            >
+              Want the full story?{" "}
+              <Link href="#about" className="font-medium text-[var(--accent)] hover:underline">
+                Scroll for history &amp; karaoke
+              </Link>
+              {" · "}
+              <Link href="/contact" className="font-medium text-[var(--accent)] hover:underline">
+                Visit &amp; contact
+              </Link>
+            </motion.p>
+          </div>
+
+          <div className="flex flex-col gap-6 lg:sticky lg:top-28">
+            <HeroMosaic tiles={MOSAIC} />
+            <TonightPanel />
+          </div>
+        </div>
       </div>
     </section>
   );

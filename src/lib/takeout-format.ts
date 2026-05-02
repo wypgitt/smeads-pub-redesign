@@ -12,7 +12,24 @@ export function formatMoney(cents: number) {
   }).format(cents / 100);
 }
 
-export type CartLine = { id: TakeoutItemId; qty: number };
+export type CartLine = {
+  id: TakeoutItemId;
+  qty: number;
+  /** Per-line choices (e.g. sauce, cook temp). Empty if none. */
+  modifiers: Record<string, string>;
+};
+
+function modsKey(mods: Record<string, string>): string {
+  const keys = Object.keys(mods).sort();
+  if (keys.length === 0) return "";
+  return JSON.stringify(
+    Object.fromEntries(keys.map((k) => [k, mods[k] ?? ""])),
+  );
+}
+
+export function cartLineKey(line: CartLine): string {
+  return `${line.id}::${modsKey(line.modifiers)}`;
+}
 
 export function cartSubtotal(lines: CartLine[]) {
   let total = 0;
@@ -31,6 +48,12 @@ export function buildOrderRef() {
   const day = String(d.getDate()).padStart(2, "0");
   const rand = Math.random().toString(36).slice(2, 6).toUpperCase();
   return `SM-${y}${m}${day}-${rand}`;
+}
+
+function formatModifiersLine(mods: Record<string, string>): string {
+  const entries = Object.entries(mods).filter(([, v]) => v.trim());
+  if (entries.length === 0) return "";
+  return entries.map(([k, v]) => `${k}: ${v}`).join("; ");
 }
 
 export function formatOrderPlainText(params: {
@@ -61,9 +84,13 @@ export function formatOrderPlainText(params: {
     const item = getTakeoutItem(line.id);
     if (!item) continue;
     const lineTotal = item.priceCents * line.qty;
+    const modStr = formatModifiersLine(line.modifiers);
     rows.push(
       `${line.qty}× ${item.name} — ${formatMoney(lineTotal)} (${formatMoney(item.priceCents)} ea)`,
     );
+    if (modStr) {
+      rows.push(`   ${modStr}`);
+    }
   }
 
   rows.push("", `Subtotal: ${formatMoney(cartSubtotal(lines))}`);
@@ -80,15 +107,51 @@ export function formatOrderPlainText(params: {
   return rows.join("\n");
 }
 
-export function resolveCartLines(
-  items: { id: string; qty: number }[],
-): CartLine[] | null {
-  const merged = new Map<TakeoutItemId, number>();
+export type RawCartRow = { id: string; qty: number; modifiers?: Record<string, string> };
+
+export function resolveCartLines(items: RawCartRow[]): CartLine[] | null {
+  const merged = new Map<string, CartLine>();
+
   for (const row of items) {
     const item = takeoutItems.find((i) => i.id === row.id);
     if (!item) return null;
     if (row.qty < 1 || row.qty > 25) return null;
-    merged.set(item.id, (merged.get(item.id) ?? 0) + row.qty);
+
+    const modifiers: Record<string, string> = {};
+    if (row.modifiers && typeof row.modifiers === "object") {
+      for (const [k, v] of Object.entries(row.modifiers)) {
+        if (typeof v !== "string" || v.length > 80) return null;
+        modifiers[k] = v.slice(0, 80);
+      }
+    }
+
+    const modGroups =
+      "modifiers" in item && item.modifiers && item.modifiers.length > 0
+        ? item.modifiers
+        : null;
+    if (modGroups) {
+      for (const g of modGroups) {
+        const picked = modifiers[g.id]?.trim();
+        if (!picked || !(g.options as readonly string[]).includes(picked)) {
+          return null;
+        }
+      }
+    } else if (Object.keys(modifiers).length > 0) {
+      return null;
+    }
+
+    const line: CartLine = { id: item.id, qty: row.qty, modifiers };
+    const key = cartLineKey(line);
+    const prev = merged.get(key);
+    if (prev) {
+      prev.qty += line.qty;
+      if (prev.qty > 25) return null;
+    } else {
+      merged.set(key, { ...line });
+    }
   }
-  return Array.from(merged.entries()).map(([id, qty]) => ({ id, qty }));
+
+  const out = Array.from(merged.values());
+  if (out.length === 0) return null;
+  return out;
 }

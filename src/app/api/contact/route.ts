@@ -38,9 +38,7 @@ export async function POST(req: Request) {
     process.env.CONTACT_NOTIFY_EMAIL?.trim() ||
     process.env.TAKEOUT_NOTIFY_EMAIL?.trim();
   const resendKey = process.env.RESEND_API_KEY?.trim();
-  const from =
-    process.env.RESEND_FROM?.trim() ||
-    `${site.name} <onboarding@resend.dev>`;
+  const from = process.env.RESEND_FROM?.trim();
 
   const plain = [
     `Contact form — ${site.name}`,
@@ -58,6 +56,13 @@ export async function POST(req: Request) {
     .join("\n");
 
   if (notifyTo && resendKey) {
+    if (!from) {
+      return NextResponse.json(
+        { error: "Email sender is not configured. Please call or email us directly." },
+        { status: 500 },
+      );
+    }
+
     try {
       const resend = new Resend(resendKey);
       const { error } = await resend.emails.send({

@@ -16,7 +16,7 @@ export const otherHappenings = [
 
 export const triviaFlyer = {
   /** Served from /public — replace file anytime without code changes. */
-  imageSrc: "/images/events/trivia-night-flyer.png",
+  imageSrc: "/images/events/trivia-night-flyer.jpg",
   /** Real text for SEO & screen readers (matches flyer). */
   imageAlt:
     "Smeads Pub Trivia Night: every Thursday from 7 to 9 pm. Try the Bacon and Brains special. 3395 Evergreen Way, Washougal, WA 98671.",

@@ -1,6 +1,5 @@
 import { SiteHeader } from "@/components/site-header";
 import { Hero } from "@/components/hero";
-import { HoursStrip } from "@/components/hours-strip";
 import { AboutSection } from "@/components/about-section";
 import { MenuSection } from "@/components/menu-section";
 import { SpecialsSection } from "@/components/specials-section";
@@ -16,7 +15,6 @@ export default function Home() {
       <SiteHeader />
       <main className="flex-1">
         <Hero />
-        <HoursStrip />
         <AboutSection />
         <MenuSection />
         <SpecialsSection />

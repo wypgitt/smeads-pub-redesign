@@ -3,6 +3,12 @@
  * Prices are in USD cents for clean math (899 = $8.99).
  */
 
+export type TakeoutModifierGroup = {
+  id: string;
+  label: string;
+  options: readonly string[];
+};
+
 export const takeoutCategories = [
   { id: "starters", label: "Starters" },
   { id: "burgers", label: "Burgers & handhelds" },
@@ -19,6 +25,7 @@ export const takeoutItems = [
     name: "Loaded nachos",
     description: "Cheese, jalapeños, salsa, sour cream",
     priceCents: 1299,
+    popular: true,
   },
   {
     id: "wings",
@@ -26,6 +33,14 @@ export const takeoutItems = [
     name: "Pub wings (10)",
     description: "House sauce or ranch",
     priceCents: 1499,
+    popular: true,
+    modifiers: [
+      {
+        id: "sauce",
+        label: "Sauce",
+        options: ["House", "Ranch", "Buffalo", "BBQ"],
+      },
+    ] as const satisfies readonly TakeoutModifierGroup[],
   },
   {
     id: "pretzel",
@@ -40,6 +55,14 @@ export const takeoutItems = [
     name: "Smeads burger",
     description: "Classic pub burger — lettuce, tomato, onion, pickle",
     priceCents: 1699,
+    popular: true,
+    modifiers: [
+      {
+        id: "temp",
+        label: "Cook",
+        options: ["Medium rare", "Medium", "Medium well", "Well"],
+      },
+    ] as const satisfies readonly TakeoutModifierGroup[],
   },
   {
     id: "bbq-burger",
@@ -47,6 +70,13 @@ export const takeoutItems = [
     name: "BBQ bacon cheddar",
     description: "Smoky BBQ, bacon, cheddar",
     priceCents: 1799,
+    modifiers: [
+      {
+        id: "temp",
+        label: "Cook",
+        options: ["Medium rare", "Medium", "Medium well", "Well"],
+      },
+    ] as const satisfies readonly TakeoutModifierGroup[],
   },
   {
     id: "fish-tacos",
@@ -61,6 +91,7 @@ export const takeoutItems = [
     name: "Fish & chips",
     description: "Beer-battered with fries & slaw",
     priceCents: 1899,
+    popular: true,
   },
   {
     id: "chowder",
@@ -86,4 +117,16 @@ const itemById = Object.fromEntries(
 
 export function getTakeoutItem(id: string) {
   return itemById[id as TakeoutItemId];
+}
+
+export function getDefaultModifiers(
+  item: (typeof takeoutItems)[number],
+): Record<string, string> {
+  const mods: Record<string, string> = {};
+  const groups = "modifiers" in item ? item.modifiers : undefined;
+  if (!groups) return mods;
+  for (const g of groups) {
+    mods[g.id] = g.options[0] ?? "";
+  }
+  return mods;
 }

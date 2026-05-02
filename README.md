@@ -1,36 +1,76 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Smeads Pub Redesign
 
-## Getting Started
+Design-first Next.js app for Smeads Pub: homepage, menu, events, contact, a floating Ask Smeads AI drawer, and a takeout pickup flow.
 
-First, run the development server:
+## Local Development
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Quality Checks
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run lint
+npm run build
+```
 
-## Learn More
+This project uses the App Router on Next.js 16. The local agent rules require checking `node_modules/next/dist/docs/` before changing Next APIs or conventions.
 
-To learn more about Next.js, take a look at the following resources:
+## Site Content
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Most public copy lives in:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- `src/data/site.ts` for hours, contact info, homepage copy, specials, and gallery images
+- `src/data/full-menu.ts` for the full menu page
+- `src/data/takeout-menu.ts` for online pickup items, prices, and modifiers
+- `src/data/events.ts` for trivia and event content
 
-## Deploy on Vercel
+Local images are served from `public/images/` and referenced by root-relative paths such as `/images/smeads/interior.jpg`.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Takeout
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The `/order` page builds a pickup order, supports search, popular items, item modifiers, pickup presets, notes, and a manual copy/text fallback.
+
+Email delivery is optional. Configure these environment variables to send takeout emails:
+
+```bash
+RESEND_API_KEY=...
+RESEND_FROM="Smeads Pub <orders@smeadspub.com>"
+TAKEOUT_NOTIFY_EMAIL=...
+```
+
+Without email configuration, the app still returns a formatted order summary for manual text/call handling.
+
+## Contact
+
+The contact form uses the same `RESEND_API_KEY` and `RESEND_FROM`. It sends to `CONTACT_NOTIFY_EMAIL`, falling back to `TAKEOUT_NOTIFY_EMAIL` if needed.
+
+```bash
+CONTACT_NOTIFY_EMAIL=...
+```
+
+Without email configuration, the form returns copyable message text and a mailto fallback.
+
+## Ask Smeads AI
+
+The floating Ask AI drawer calls `/api/pub-assistant`. It answers from local site knowledge first and can use OpenAI for better wording when configured:
+
+```bash
+OPENAI_API_KEY=...
+OPENAI_MODEL=...
+```
+
+If no OpenAI key is present, the route falls back to local rule-based answers.
+
+## Design Notes
+
+The current design goal is a real customer-facing pub app, not a generic restaurant brochure:
+
+- task-first navigation: Order, Menu, Events, Visit, Ask
+- local Smeads imagery instead of stock placeholders
+- mobile-friendly takeout ordering with a persistent cart review bar
+- global AI help without burying the assistant on the contact page

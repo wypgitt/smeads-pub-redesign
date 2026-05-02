@@ -3,24 +3,20 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, Phone, X } from "lucide-react";
+import { Bot, Menu, Phone, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { site } from "@/data/site";
+import { useAskSmeads } from "@/components/providers/ask-smeads-provider";
 
 type NavEntry =
   | { kind: "section"; id: string; label: string }
   | { kind: "route"; href: string; label: string };
 
 const navEntries: NavEntry[] = [
-  { kind: "section", id: "home", label: "Home" },
-  { kind: "section", id: "about", label: "About" },
+  { kind: "route", href: "/order", label: "Order" },
   { kind: "route", href: "/menu", label: "Menu" },
-  { kind: "section", id: "specials", label: "Specials" },
   { kind: "route", href: "/events", label: "Events" },
-  { kind: "section", id: "karaoke", label: "Karaoke" },
-  { kind: "section", id: "gallery", label: "Gallery" },
   { kind: "section", id: "visit", label: "Visit" },
-  { kind: "route", href: "/contact", label: "Contact" },
 ];
 
 function sectionHref(pathname: string, id: string) {
@@ -31,6 +27,7 @@ export function SiteHeader() {
   const pathname = usePathname() ?? "/";
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const { openAsk } = useAskSmeads();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -56,7 +53,7 @@ export function SiteHeader() {
     >
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:h-[4.25rem] sm:px-6">
         <Link
-          href={sectionHref(pathname, "home")}
+          href={pathname === "/" ? "#home" : "/"}
           className="font-serif text-lg font-semibold tracking-tight text-[var(--text-primary)] sm:text-xl"
         >
           {site.name}
@@ -89,16 +86,14 @@ export function SiteHeader() {
               </Link>
             ),
           )}
-          <Link
-            href="/order"
-            className={`focus-ring rounded-md px-2.5 py-1.5 text-sm font-semibold transition-colors ${
-              pathname === "/order"
-                ? "text-[var(--accent)]"
-                : "text-[var(--text-muted)] hover:text-[var(--accent)]"
-            }`}
+          <button
+            type="button"
+            onClick={openAsk}
+            className="focus-ring inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-semibold text-[var(--accent)] transition-colors hover:text-[var(--text-primary)]"
           >
-            Order
-          </Link>
+            <Bot className="size-4" aria-hidden />
+            Ask
+          </button>
         </nav>
 
         <div className="flex items-center gap-2">
@@ -109,6 +104,14 @@ export function SiteHeader() {
             <Phone className="size-4 shrink-0 text-[var(--accent)]" aria-hidden />
             <span className="tabular-nums">{site.phone}</span>
           </a>
+          <button
+            type="button"
+            onClick={openAsk}
+            className="focus-ring hidden items-center gap-1.5 rounded-full border border-[var(--accent)]/40 bg-[var(--accent)]/10 px-3 py-2 text-sm font-semibold text-[var(--accent)] lg:hidden"
+          >
+            <Bot className="size-4" aria-hidden />
+            Ask
+          </button>
           <a
             href={`tel:${site.phoneTel}`}
             className="focus-ring flex rounded-full border border-[var(--border-subtle)] bg-[var(--bg-card)] p-2.5 text-[var(--accent)] sm:hidden"
@@ -161,13 +164,6 @@ export function SiteHeader() {
                 </button>
               </div>
               <div className="flex flex-1 flex-col gap-1 overflow-y-auto p-4">
-                <Link
-                  href="/order"
-                  onClick={() => setOpen(false)}
-                  className="focus-ring rounded-lg bg-[var(--accent)]/15 px-3 py-3 text-base font-semibold text-[var(--accent)]"
-                >
-                  Order takeout
-                </Link>
                 {navEntries.map((item) =>
                   item.kind === "route" ? (
                     <Link
@@ -193,6 +189,17 @@ export function SiteHeader() {
                     </Link>
                   ),
                 )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    openAsk();
+                    setOpen(false);
+                  }}
+                  className="focus-ring flex items-center gap-2 rounded-lg bg-[var(--accent)]/15 px-3 py-3 text-base font-semibold text-[var(--accent)]"
+                >
+                  <Bot className="size-5" aria-hidden />
+                  Ask Smeads AI
+                </button>
                 <a
                   href={`tel:${site.phoneTel}`}
                   className="focus-ring mt-4 flex items-center justify-center gap-2 rounded-full bg-[var(--accent)] px-4 py-3 text-center text-sm font-semibold text-[var(--bg-deep)]"

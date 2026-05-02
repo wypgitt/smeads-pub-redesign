@@ -2,15 +2,65 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
-import { X } from "lucide-react";
+import { ImageIcon, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { SectionHeading } from "@/components/section-heading";
 import { site } from "@/data/site";
 
+function GalleryTile({
+  src,
+  alt,
+  caption,
+  onOpen,
+}: {
+  src: string;
+  alt: string;
+  caption: string;
+  onOpen: () => void;
+}) {
+  const [broken, setBroken] = useState(false);
+
+  if (broken) {
+    return (
+      <div className="flex aspect-[4/3] flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-[var(--border-subtle)] bg-[var(--bg-card)]/90 p-4 text-center">
+        <ImageIcon className="size-10 text-[var(--accent)]/50" aria-hidden />
+        <p className="text-sm font-medium text-[var(--text-primary)]">{caption}</p>
+        <p className="text-xs text-[var(--text-muted)]">
+          Photo temporarily unavailable.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className="focus-ring group relative aspect-[4/3] overflow-hidden rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card)] text-left"
+    >
+      <Image
+        src={src}
+        alt={alt}
+        fill
+        sizes="(max-width: 640px) 50vw, 33vw"
+        className="object-cover transition duration-500 group-hover:scale-105"
+        onError={() => setBroken(true)}
+      />
+      <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-3 pt-10">
+        <span className="text-sm font-medium text-white">{caption}</span>
+      </span>
+    </button>
+  );
+}
+
 export function GallerySection() {
   const [index, setIndex] = useState<number | null>(null);
+  const [lightboxBroken, setLightboxBroken] = useState(false);
 
-  const close = useCallback(() => setIndex(null), []);
+  const close = useCallback(() => {
+    setIndex(null);
+    setLightboxBroken(false);
+  }, []);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -35,29 +85,23 @@ export function GallerySection() {
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <SectionHeading eyebrow="Inside & out" title="Gallery" align="center">
           <p className="mx-auto">
-            A taste of the vibe — swap these placeholders for your real photos anytime.
+            A quick look at the room, the taps, the patio, and the nights people
+            keep coming back for.
           </p>
         </SectionHeading>
 
         <div className="mt-12 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
           {site.gallery.map((img, i) => (
-            <button
+            <GalleryTile
               key={img.src}
-              type="button"
-              onClick={() => setIndex(i)}
-              className="focus-ring group relative aspect-[4/3] overflow-hidden rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card)] text-left"
-            >
-              <Image
-                src={img.src}
-                alt={img.alt}
-                fill
-                sizes="(max-width: 640px) 50vw, 33vw"
-                className="object-cover transition duration-500 group-hover:scale-105"
-              />
-              <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-3 pt-10">
-                <span className="text-sm font-medium text-white">{img.caption}</span>
-              </span>
-            </button>
+              src={img.src}
+              alt={img.alt}
+              caption={img.caption}
+              onOpen={() => {
+                setLightboxBroken(false);
+                setIndex(i);
+              }}
+            />
           ))}
         </div>
       </div>
@@ -90,13 +134,23 @@ export function GallerySection() {
                 <X className="size-5" />
               </button>
               <div className="relative aspect-[16/10] w-[min(100vw-2rem,56rem)]">
-                <Image
-                  src={site.gallery[index].src}
-                  alt={site.gallery[index].alt}
-                  fill
-                  className="object-contain"
-                  sizes="(max-width: 896px) 100vw, 896px"
-                />
+                {lightboxBroken ? (
+                  <div className="flex h-full flex-col items-center justify-center gap-3 bg-[var(--bg-card)] p-8 text-center">
+                    <ImageIcon className="size-14 text-[var(--accent)]/40" aria-hidden />
+                    <p className="text-sm text-[var(--text-muted)]">
+                      Photo temporarily unavailable.
+                    </p>
+                  </div>
+                ) : (
+                  <Image
+                    src={site.gallery[index].src}
+                    alt={site.gallery[index].alt}
+                    fill
+                    className="object-contain"
+                    sizes="(max-width: 896px) 100vw, 896px"
+                    onError={() => setLightboxBroken(true)}
+                  />
+                )}
               </div>
               <p className="border-t border-[var(--border-subtle)] px-4 py-3 text-center text-sm text-[var(--text-muted)]">
                 {site.gallery[index].caption}

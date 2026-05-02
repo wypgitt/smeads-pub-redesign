@@ -70,7 +70,7 @@ export function buildPubKnowledgeText(): string {
     site.karaoke.title,
     site.karaoke.body.join(" "),
     "",
-    "TAKEOUT (example items on /order; prices may differ from dining room):",
+    "TAKEOUT (online pickup menu on /order; prices may differ from dining room):",
     takeoutSummary(),
     "",
     "FULL MENU (dining; prices and availability can change):",

@@ -46,8 +46,8 @@ export const site = {
   hoursDisclaimer:
     "Hours can change for holidays or special events — call ahead if you’re unsure.",
   hero: {
-    headline: "Experience the ultimate upper end dive bar",
-    sub: "Full bar, twenty taps, happy hour, live music, and a beer garden on the Columbia — since 1931.",
+    headline: "Same door since 1931. Cold beer, loud laughs, zero attitude.",
+    sub: "Washougal’s neighborhood joint — twenty taps, a beer garden, karaoke weekends, and Thursday trivia with the crew. Come as you are.",
   },
   about: {
     lede: "Behind the bar and in front of it, Smeads Pub willingly stands toe-to-toe with any establishment up and down the Mighty Columbia River.",
@@ -59,10 +59,10 @@ export const site = {
     ],
   },
   highlights: [
-    { title: "20 taps", detail: "Popular beers rotated regularly" },
-    { title: "Since 1931", detail: "Tom & Clara Smead’s original spot" },
-    { title: "Beer garden", detail: "Outdoor hangs when the Gorge shines" },
-    { title: "Daily specials", detail: "Food & drink deals most nights" },
+    { title: "Washougal regulars", detail: "Not a chain — a room full of neighbors" },
+    { title: "Taps & tunes", detail: "Beer garden, karaoke, the occasional bad decision" },
+    { title: "Thursday brains", detail: "Trivia — prove you’re clever (or lucky)" },
+    { title: "Takeout", detail: "Order online — we’ll yell when it’s ready" },
   ],
   specialsIntro:
     "In addition to our awesome regular menu, we have a rotating cast of specials — plus themed nights all week.",
@@ -136,38 +136,37 @@ export const site = {
     "Seasonal fish & comfort plates",
     "Full cocktail list + locals on tap",
   ],
+  /** Photos sourced from smeadspub.com gallery/media and stored locally. */
   gallery: [
     {
-      src: "https://images.unsplash.com/photo-1514933651103-005eec06c04b?auto=format&fit=crop&w=1200&q=80",
-      alt: "Warm neighborhood pub interior with taps",
+      src: "/images/smeads/interior.jpg",
+      alt: "Smeads Pub — inside the bar",
       caption: "Inside the bar",
     },
     {
-      src: "https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?auto=format&fit=crop&w=1200&q=80",
-      alt: "Craft beer in a glass on a wooden bar",
-      caption: "Twenty taps",
+      src: "/images/smeads/taps.jpg",
+      alt: "Smeads Pub — bar and taps",
+      caption: "The bar & taps",
     },
     {
-      src: "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1200&q=80",
-      alt: "Pub-style spread of barbecue plates on a wooden table",
-      caption: "Apps & cold drinks",
+      src: "/images/smeads/food.jpg",
+      alt: "Pub food at Smeads",
+      caption: "From the kitchen",
     },
     {
-      src: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=1200&q=80",
-      alt: "Classic burger with fries",
-      caption: "Pub favorites",
+      src: "/images/smeads/garden.jpg",
+      alt: "Smeads Pub — outdoor patio and guests",
+      caption: "Patio & crowd",
     },
     {
-      src: "https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?auto=format&fit=crop&w=1200&q=80",
-      alt: "Outdoor tables with drinks at dusk",
-      caption: "Beer garden energy",
+      src: "/images/smeads/karaoke.jpg",
+      alt: "Karaoke at Smeads Pub",
+      caption: "Karaoke nights",
     },
     {
-      src: "https://images.unsplash.com/photo-1544145945-f90425340c7e?auto=format&fit=crop&w=1200&q=80",
-      alt: "Colorful cocktails on the bar",
-      caption: "Cocktails & nightcaps",
+      src: "/images/events/trivia-night-flyer.jpg",
+      alt: "Smeads Pub Trivia Night flyer — Thursdays 7–9 pm",
+      caption: "Thursday trivia",
     },
   ],
-  credit: "Site by Zipazi Digital",
-  creditUrl: "https://zipazi.com",
 } as const;
