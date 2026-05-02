@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Minus, Plus, Search, ShoppingBag, Copy, Check, Flame } from "lucide-react";
+import { Bot, Minus, Plus, Search, ShoppingBag, Copy, Check, Flame } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   getDefaultModifiers,
@@ -20,6 +20,7 @@ import {
   formatOrderPlainText,
   type CartLine,
 } from "@/lib/takeout-format";
+import { useAskSmeads } from "@/components/providers/ask-smeads-provider";
 
 type Status =
   | { kind: "idle" }
@@ -42,6 +43,7 @@ const PICKUP_PRESETS: { label: string; mode: "asap" | "schedule"; detail: string
 ];
 
 export function TakeoutOrderClient() {
+  const { openAsk } = useAskSmeads();
   const [category, setCategory] = useState<TakeoutCategoryId>(
     takeoutCategories[0]!.id,
   );
@@ -65,13 +67,14 @@ export function TakeoutOrderClient() {
   );
 
   const searchNeedle = search.trim().toLowerCase();
+  const isSearching = searchNeedle.length > 0;
   const filteredByCat = useMemo(
     () => takeoutItems.filter((i) => i.categoryId === category),
     [category],
   );
   const filtered = useMemo(() => {
     if (!searchNeedle) return filteredByCat;
-    return filteredByCat.filter(
+    return takeoutItems.filter(
       (i) =>
         i.name.toLowerCase().includes(searchNeedle) ||
         i.description.toLowerCase().includes(searchNeedle),
@@ -82,6 +85,7 @@ export function TakeoutOrderClient() {
     () => takeoutItems.filter((i) => "popular" in i && i.popular),
     [],
   );
+  const selectedCategory = takeoutCategories.find((c) => c.id === category);
 
   function modsForItem(item: (typeof takeoutItems)[number]): Record<string, string> {
     const base = getDefaultModifiers(item);
@@ -128,6 +132,24 @@ export function TakeoutOrderClient() {
       },
       delta,
     );
+  }
+
+  function categoryLabelFor(item: (typeof takeoutItems)[number]) {
+    return takeoutCategories.find((c) => c.id === item.categoryId)?.label;
+  }
+
+  function modifierSummary(
+    item: (typeof takeoutItems)[number],
+    modifiers: Record<string, string>,
+  ) {
+    const groups = "modifiers" in item && item.modifiers ? item.modifiers : [];
+    return Object.entries(modifiers)
+      .filter(([, v]) => v.trim())
+      .map(([k, v]) => {
+        const label = groups.find((g) => g.id === k)?.label ?? k;
+        return `${label}: ${v}`;
+      })
+      .join(" · ");
   }
 
   async function submit() {
@@ -240,7 +262,38 @@ export function TakeoutOrderClient() {
           We&apos;ll confirm prep time by phone when needed. Pay at pickup unless we&apos;ve
           arranged something else.
         </p>
+        <button
+          type="button"
+          onClick={() => openAsk("What should I know before ordering takeout from Smeads?")}
+          className="focus-ring mt-5 inline-flex items-center gap-2 rounded-full border border-[var(--accent)]/40 bg-[var(--accent)]/10 px-4 py-2.5 text-sm font-semibold text-[var(--accent)] transition hover:bg-[var(--accent)]/20"
+        >
+          <Bot className="size-4" aria-hidden />
+          Ask about takeout
+        </button>
       </header>
+
+      <div className="mt-8 grid gap-3 sm:grid-cols-3">
+        {[
+          ["1", "Pick favorites", "Search or browse the short pickup menu."],
+          ["2", "Choose pickup", "ASAP, a preset window, or your own note."],
+          ["3", "Pay at pickup", "Staff confirms timing and total by phone."],
+        ].map(([step, title, detail]) => (
+          <div
+            key={step}
+            className="rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card)]/70 p-4"
+          >
+            <p className="text-xs font-semibold uppercase tracking-wide text-[var(--accent)]">
+              Step {step}
+            </p>
+            <p className="mt-1 font-serif text-lg font-semibold text-[var(--text-primary)]">
+              {title}
+            </p>
+            <p className="mt-1 text-sm leading-relaxed text-[var(--text-muted)]">
+              {detail}
+            </p>
+          </div>
+        ))}
+      </div>
 
       <div className="mt-8">
         <label htmlFor="takeout-search" className="sr-only">
@@ -305,7 +358,23 @@ export function TakeoutOrderClient() {
             ))}
           </div>
 
-          <ul className="mt-8 space-y-4">
+          <div className="mt-8 flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-[var(--accent)]">
+                {isSearching ? "Search results" : selectedCategory?.label}
+              </p>
+              <h2 className="mt-1 font-serif text-2xl font-semibold text-[var(--text-primary)]">
+                {isSearching
+                  ? `Matching “${search.trim()}”`
+                  : "Choose your pickup items"}
+              </h2>
+            </div>
+            <p className="text-sm text-[var(--text-muted)]">
+              {filtered.length} item{filtered.length === 1 ? "" : "s"}
+            </p>
+          </div>
+
+          <ul className="mt-5 space-y-4">
             {filtered.map((item) => {
               const activeKey = cartLineKey({
                 id: item.id,
@@ -325,6 +394,11 @@ export function TakeoutOrderClient() {
                   className="flex flex-col gap-3 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-card)] p-4 sm:flex-row sm:items-start sm:justify-between"
                 >
                   <div className="min-w-0 flex-1">
+                    {isSearching ? (
+                      <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-[var(--copper)]">
+                        {categoryLabelFor(item)}
+                      </p>
+                    ) : null}
                     <p className="font-serif text-lg font-semibold text-[var(--text-primary)]">
                       {item.name}
                     </p>
@@ -391,7 +465,7 @@ export function TakeoutOrderClient() {
 
           {filtered.length === 0 ? (
             <p className="mt-8 text-sm text-[var(--text-muted)]">
-              No matches — try another search or pick a category.
+              No matches — try another search or clear the search to browse by category.
             </p>
           ) : null}
 
@@ -423,10 +497,7 @@ export function TakeoutOrderClient() {
                 {lines.map((line) => {
                   const item = getTakeoutItem(line.id);
                   if (!item) return null;
-                  const modStr = Object.entries(line.modifiers)
-                    .filter(([, v]) => v.trim())
-                    .map(([k, v]) => `${k}: ${v}`)
-                    .join(" · ");
+                  const modStr = modifierSummary(item, line.modifiers);
                   return (
                     <li
                       key={cartLineKey(line)}

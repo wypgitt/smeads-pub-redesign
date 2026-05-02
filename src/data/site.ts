@@ -2,6 +2,8 @@
 
 export const site = {
   name: "Smeads Pub",
+  /** Circular pub mark (PNG) — `public/images/brand/smeads-mark.png` */
+  brandMarkSrc: "/images/brand/smeads-mark.png",
   tagline: "Washougal’s Ultimate Upper End Dive Bar",
   phone: "(360) 835-7370",
   phoneTel: "+13608357370",

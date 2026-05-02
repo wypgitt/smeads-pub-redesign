@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BrandMark } from "@/components/brand-mark";
 import { site } from "@/data/site";
 
 export function SiteFooter() {
@@ -16,10 +17,15 @@ export function SiteFooter() {
   return (
     <footer className="border-t border-[var(--border-subtle)] bg-[var(--bg-deep)] py-12">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <p className="font-serif text-lg font-semibold text-[var(--text-primary)]">
-          {site.name}
-        </p>
-        <p className="mt-1 text-sm text-[var(--text-muted)]">{site.tagline}</p>
+        <div className="flex items-center gap-3 sm:gap-4">
+          <BrandMark size="footer" />
+          <div>
+            <p className="font-serif text-lg font-semibold text-[var(--text-primary)]">
+              {site.name}
+            </p>
+            <p className="mt-1 text-sm text-[var(--text-muted)]">{site.tagline}</p>
+          </div>
+        </div>
 
         <nav
           className="mt-6 flex flex-wrap gap-x-4 gap-y-2 text-sm text-[var(--text-muted)]"

@@ -26,7 +26,7 @@ export function AskSmeadsAiCta() {
         </div>
         <button
           type="button"
-          onClick={openAsk}
+          onClick={() => openAsk("What are your hours, and can kids come for breakfast?")}
           className="focus-ring inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-full bg-[var(--accent)] px-6 py-3 text-sm font-semibold text-[var(--bg-deep)] shadow-lg transition hover:brightness-110 sm:self-center"
         >
           <MessageCircle className="size-5" aria-hidden />

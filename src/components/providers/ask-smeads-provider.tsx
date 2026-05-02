@@ -14,7 +14,7 @@ import { SmeadsPubAIChat } from "@/components/contact/smeads-pub-ai-chat";
 
 type AskCtx = {
   open: boolean;
-  openAsk: () => void;
+  openAsk: (prompt?: string) => void;
   closeAsk: () => void;
   toggleAsk: () => void;
 };
@@ -36,10 +36,14 @@ export function useAskSmeads() {
 
 export function AskSmeadsProvider({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
+  const [starterPrompt, setStarterPrompt] = useState("");
   const pathname = usePathname();
   const liftForOrderCart = pathname === "/order";
 
-  const openAsk = useCallback(() => setOpen(true), []);
+  const openAsk = useCallback((prompt?: string) => {
+    if (prompt) setStarterPrompt(prompt);
+    setOpen(true);
+  }, []);
   const closeAsk = useCallback(() => setOpen(false), []);
   const toggleAsk = useCallback(() => setOpen((o) => !o), []);
 
@@ -115,7 +119,11 @@ export function AskSmeadsProvider({ children }: { children: React.ReactNode }) {
                 </button>
               </div>
               <div className="min-h-0 flex-1 overflow-hidden px-2 pb-4 pt-2">
-                <SmeadsPubAIChat variant="drawer" />
+                <SmeadsPubAIChat
+                  key={starterPrompt || "default"}
+                  variant="drawer"
+                  starterPrompt={starterPrompt}
+                />
               </div>
             </motion.div>
           </>

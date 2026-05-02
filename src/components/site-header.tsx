@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Bot, Menu, Phone, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { BrandMark } from "@/components/brand-mark";
 import { site } from "@/data/site";
 import { useAskSmeads } from "@/components/providers/ask-smeads-provider";
 
@@ -54,9 +55,10 @@ export function SiteHeader() {
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:h-[4.25rem] sm:px-6">
         <Link
           href={pathname === "/" ? "#home" : "/"}
-          className="font-serif text-lg font-semibold tracking-tight text-[var(--text-primary)] sm:text-xl"
+          className="focus-ring flex items-center gap-2.5 rounded-md py-1 font-serif text-lg font-semibold tracking-tight text-[var(--text-primary)] sm:gap-3 sm:text-xl"
         >
-          {site.name}
+          <BrandMark size="header" priority />
+          <span>{site.name}</span>
         </Link>
 
         <nav
@@ -88,7 +90,7 @@ export function SiteHeader() {
           )}
           <button
             type="button"
-            onClick={openAsk}
+            onClick={() => openAsk("What should I know before visiting Smeads today?")}
             className="focus-ring inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-semibold text-[var(--accent)] transition-colors hover:text-[var(--text-primary)]"
           >
             <Bot className="size-4" aria-hidden />
@@ -106,7 +108,7 @@ export function SiteHeader() {
           </a>
           <button
             type="button"
-            onClick={openAsk}
+            onClick={() => openAsk("What should I know before visiting Smeads today?")}
             className="focus-ring hidden items-center gap-1.5 rounded-full border border-[var(--accent)]/40 bg-[var(--accent)]/10 px-3 py-2 text-sm font-semibold text-[var(--accent)] lg:hidden"
           >
             <Bot className="size-4" aria-hidden />
@@ -153,7 +155,10 @@ export function SiteHeader() {
               className="fixed inset-y-0 right-0 z-50 flex w-[min(100%,20rem)] flex-col border-l border-[var(--border-subtle)] bg-[var(--bg-elevated)] shadow-2xl lg:hidden"
             >
               <div className="flex items-center justify-between border-b border-[var(--border-subtle)] p-4">
-                <span className="font-serif font-semibold">{site.name}</span>
+                <span className="flex items-center gap-2.5 font-serif font-semibold">
+                  <BrandMark size="drawer" />
+                  {site.name}
+                </span>
                 <button
                   type="button"
                   className="focus-ring rounded-md p-2 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
@@ -192,7 +197,7 @@ export function SiteHeader() {
                 <button
                   type="button"
                   onClick={() => {
-                    openAsk();
+                    openAsk("What should I know before visiting Smeads today?");
                     setOpen(false);
                   }}
                   className="focus-ring flex items-center gap-2 rounded-lg bg-[var(--accent)]/15 px-3 py-3 text-base font-semibold text-[var(--accent)]"

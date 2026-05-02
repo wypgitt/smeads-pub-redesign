@@ -27,7 +27,7 @@ const items = [
 ];
 
 export function TaskStrip() {
-  const { toggleAsk } = useAskSmeads();
+  const { openAsk } = useAskSmeads();
 
   return (
     <div className="flex flex-wrap gap-2 sm:gap-3">
@@ -38,7 +38,7 @@ export function TaskStrip() {
             <button
               key={item.label}
               type="button"
-              onClick={toggleAsk}
+              onClick={() => openAsk("What should I know before visiting Smeads today?")}
               className="focus-ring inline-flex items-center gap-2 rounded-full border-2 border-[var(--accent)]/50 bg-[var(--accent)]/10 px-4 py-2.5 text-sm font-semibold text-[var(--accent)] transition hover:bg-[var(--accent)]/20"
             >
               <Icon className="size-4" aria-hidden />

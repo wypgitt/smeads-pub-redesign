@@ -13,11 +13,11 @@ const SUGGESTIONS = [
   "Can I order takeout?",
 ];
 
-type Props = { variant?: "page" | "drawer" };
+type Props = { variant?: "page" | "drawer"; starterPrompt?: string };
 
-export function SmeadsPubAIChat({ variant = "page" }: Props) {
+export function SmeadsPubAIChat({ variant = "page", starterPrompt = "" }: Props) {
   const isDrawer = variant === "drawer";
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState(starterPrompt);
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: "assistant",
